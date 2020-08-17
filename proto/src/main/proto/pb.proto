@@ -993,6 +993,7 @@ message PaymentAccountPayload {
         AustraliaPayidPayload australia_payid_payload = 30;
         AmazonGiftCardAccountPayload amazon_gift_card_account_payload = 31;
         CashByMailAccountPayload cash_by_mail_account_payload = 32;
+        AtomicAccountPayload atomic_account_payload = 33;
     }
     map<string, string> exclude_from_json_data = 15;
 }
@@ -1126,6 +1127,10 @@ message CryptoCurrencyAccountPayload {
 
 message InstantCryptoCurrencyAccountPayload {
     string address = 1;
+}
+
+message AtomicAccountPayload {
+    string generic_string = 1;
 }
 
 message FasterPaymentsAccountPayload {

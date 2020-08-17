@@ -96,6 +96,7 @@ public final class PaymentMethod implements PersistablePayload, Comparable<Payme
     public static final String AMAZON_GIFT_CARD_ID = "AMAZON_GIFT_CARD";
     public static final String BLOCK_CHAINS_INSTANT_ID = "BLOCK_CHAINS_INSTANT";
     public static final String CASH_BY_MAIL_ID = "CASH_BY_MAIL";
+    public static final String ATOMIC_ID = "ATOMIC";
 
     // Cannot be deleted as it would break old trade history entries
     @Deprecated
@@ -137,6 +138,7 @@ public final class PaymentMethod implements PersistablePayload, Comparable<Payme
     public static PaymentMethod AMAZON_GIFT_CARD;
     public static PaymentMethod BLOCK_CHAINS_INSTANT;
     public static PaymentMethod CASH_BY_MAIL;
+    public static PaymentMethod ATOMIC;
 
     // Cannot be deleted as it would break old trade history entries
     @Deprecated
@@ -206,7 +208,9 @@ public final class PaymentMethod implements PersistablePayload, Comparable<Payme
             // Altcoins
             BLOCK_CHAINS = new PaymentMethod(BLOCK_CHAINS_ID, DAY, DEFAULT_TRADE_LIMIT_VERY_LOW_RISK),
             // Altcoins with 1 hour trade period
-            BLOCK_CHAINS_INSTANT = new PaymentMethod(BLOCK_CHAINS_INSTANT_ID, TimeUnit.HOURS.toMillis(1), DEFAULT_TRADE_LIMIT_VERY_LOW_RISK)
+            BLOCK_CHAINS_INSTANT = new PaymentMethod(BLOCK_CHAINS_INSTANT_ID, TimeUnit.HOURS.toMillis(1), DEFAULT_TRADE_LIMIT_VERY_LOW_RISK),
+            // BSQ Atomic Trade
+            ATOMIC = new PaymentMethod(ATOMIC_ID, 1, DEFAULT_TRADE_LIMIT_VERY_LOW_RISK)
     ));
 
     static {
@@ -342,8 +346,16 @@ public final class PaymentMethod implements PersistablePayload, Comparable<Payme
         return Res.get(id);
     }
 
+    public boolean isFiat() {
+        return !isAsset() && !isAtomic();
+    }
+
     public boolean isAsset() {
         return this.equals(BLOCK_CHAINS_INSTANT) || this.equals(BLOCK_CHAINS);
+    }
+
+    public boolean isAtomic() {
+        return this.equals(ATOMIC);
     }
 
     public static boolean hasChargebackRisk(PaymentMethod paymentMethod, List<TradeCurrency> tradeCurrencies) {
