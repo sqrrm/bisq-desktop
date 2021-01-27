@@ -89,9 +89,9 @@ public class OfferBookService {
             @Override
             public void onAdded(Collection<ProtectedStorageEntry> protectedStorageEntries) {
                 protectedStorageEntries.forEach(protectedStorageEntry -> offerBookChangedListeners.forEach(listener -> {
-                    if (protectedStorageEntry.getProtectedStoragePayload() instanceof OfferPayload) {
-                        OfferPayload offerPayload = (OfferPayload) protectedStorageEntry.getProtectedStoragePayload();
-                        Offer offer = new Offer(offerPayload);
+                    if (protectedStorageEntry.getProtectedStoragePayload() instanceof OfferPayloadI) {
+                        OfferPayloadI offerPayloadI = (OfferPayloadI) protectedStorageEntry.getProtectedStoragePayload();
+                        Offer offer = new Offer(offerPayloadI);
                         offer.setPriceFeedService(priceFeedService);
                         listener.onAdded(offer);
                     }
@@ -101,9 +101,9 @@ public class OfferBookService {
             @Override
             public void onRemoved(Collection<ProtectedStorageEntry> protectedStorageEntries) {
                 protectedStorageEntries.forEach(protectedStorageEntry -> offerBookChangedListeners.forEach(listener -> {
-                    if (protectedStorageEntry.getProtectedStoragePayload() instanceof OfferPayload) {
-                        OfferPayload offerPayload = (OfferPayload) protectedStorageEntry.getProtectedStoragePayload();
-                        Offer offer = new Offer(offerPayload);
+                    if (protectedStorageEntry.getProtectedStoragePayload() instanceof OfferPayloadI) {
+                        OfferPayloadI offerPayloadI = (OfferPayloadI) protectedStorageEntry.getProtectedStoragePayload();
+                        Offer offer = new Offer(offerPayloadI);
                         offer.setPriceFeedService(priceFeedService);
                         listener.onRemoved(offer);
                     }
@@ -193,10 +193,10 @@ public class OfferBookService {
 
     public List<Offer> getOffers() {
         return p2PService.getDataMap().values().stream()
-                .filter(data -> data.getProtectedStoragePayload() instanceof OfferPayload)
+                .filter(data -> data.getProtectedStoragePayload() instanceof OfferPayloadI)
                 .map(data -> {
-                    OfferPayload offerPayload = (OfferPayload) data.getProtectedStoragePayload();
-                    Offer offer = new Offer(offerPayload);
+                    OfferPayloadI offerPayloadI = (OfferPayloadI) data.getProtectedStoragePayload();
+                    Offer offer = new Offer(offerPayloadI);
                     offer.setPriceFeedService(priceFeedService);
                     return offer;
                 })
