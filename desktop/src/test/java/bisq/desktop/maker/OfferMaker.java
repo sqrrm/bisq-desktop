@@ -19,6 +19,7 @@ package bisq.desktop.maker;
 
 import bisq.core.offer.Offer;
 import bisq.core.offer.OfferPayload;
+import bisq.core.offer.OfferPayloadI;
 
 import com.natpryce.makeiteasy.Instantiator;
 import com.natpryce.makeiteasy.Maker;
@@ -44,7 +45,7 @@ public class OfferMaker {
                     0L,
                     null,
                     null,
-                    lookup.valueOf(direction, OfferPayload.Direction.BUY),
+                    lookup.valueOf(direction, OfferPayloadI.Direction.BUY),
                     lookup.valueOf(price, 100000L),
                     lookup.valueOf(marketPriceMargin, 0.0),
                     lookup.valueOf(useMarketBasedPrice, false),

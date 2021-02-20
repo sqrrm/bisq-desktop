@@ -30,6 +30,7 @@ import bisq.core.locale.TradeCurrency;
 import bisq.core.offer.CreateOfferService;
 import bisq.core.offer.Offer;
 import bisq.core.offer.OfferPayload;
+import bisq.core.offer.OfferPayloadI;
 import bisq.core.offer.OfferUtil;
 import bisq.core.offer.OpenOffer;
 import bisq.core.offer.OpenOfferManager;
@@ -54,6 +55,8 @@ import com.google.inject.Inject;
 import javax.inject.Named;
 
 import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 class EditOfferDataModel extends MutableOfferDataModel {
 
@@ -185,8 +188,13 @@ class EditOfferDataModel extends MutableOfferDataModel {
         // editedPayload is a merge of the original offerPayload and newOfferPayload
         // fields which are editable are merged in from newOfferPayload (such as payment account details)
         // fields which cannot change (most importantly BTC amount) are sourced from the original offerPayload
-        final OfferPayload offerPayload = openOffer.getOffer().getOfferPayload();
-        final OfferPayload newOfferPayload = createAndGetOffer().getOfferPayload();
+        final OfferPayloadI offerPayloadI = openOffer.getOffer().getOfferPayloadI();
+        final OfferPayloadI newOfferPayloadI = createAndGetOffer().getOfferPayloadI();
+        checkArgument(offerPayloadI instanceof OfferPayload, "offerPayloadI must be of type OfferPayload");
+        checkArgument(newOfferPayloadI instanceof OfferPayload, "newOfferPayloadI must be of type OfferPayload");
+        var offerPayload = (OfferPayload) offerPayloadI;
+        var newOfferPayload = (OfferPayload) newOfferPayloadI;
+
         final OfferPayload editedPayload = new OfferPayload(offerPayload.getId(),
                 offerPayload.getDate(),
                 offerPayload.getOwnerNodeAddress(),

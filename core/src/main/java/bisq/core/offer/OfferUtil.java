@@ -133,7 +133,7 @@ public class OfferUtil {
      * offer to sell BTC to the taker
      */
     public boolean isBuyOffer(Direction direction) {
-        return direction == Direction.BUY;
+        return direction == OfferPayloadI.Direction.BUY;
     }
 
     public long getMaxTradeLimit(PaymentAccount paymentAccount,
@@ -336,7 +336,7 @@ public class OfferUtil {
 
         extraDataMap.put(CAPABILITIES, Capabilities.app.toStringList());
 
-        if (currencyCode.equals("XMR") && direction == Direction.SELL) {
+        if (currencyCode.equals("XMR") && direction == OfferPayloadI.Direction.SELL) {
             preferences.getAutoConfirmSettingsList().stream()
                     .filter(e -> e.getCurrencyCode().equals("XMR"))
                     .filter(AutoConfirmSettings::isEnabled)

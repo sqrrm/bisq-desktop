@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
-import static bisq.core.offer.OfferPayload.Direction.BUY;
+import static bisq.core.offer.OfferPayloadI.Direction.BUY;
 
 /**
  * Holds and manages the unsorted and unfiltered offerbook list (except for banned offers) of both buy and sell offers.

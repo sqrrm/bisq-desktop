@@ -19,6 +19,7 @@ package bisq.core.trade.protocol.tasks.taker;
 
 import bisq.core.btc.model.AddressEntry;
 import bisq.core.btc.wallet.BtcWalletService;
+import bisq.core.offer.OfferPayload;
 import bisq.core.payment.payload.PaymentAccountPayload;
 import bisq.core.trade.Contract;
 import bisq.core.trade.SellerAsTakerTrade;
@@ -77,8 +78,12 @@ public class TakerVerifyAndSignContract extends TradeTask {
                     "takerMultiSigPubKey from AddressEntry must match the one from the trade data. trade id =" + id);
 
             Coin tradeAmount = checkNotNull(trade.getTradeAmount());
+            checkArgument(processModel.getOffer().getOfferPayloadI() instanceof OfferPayload,
+                    "OfferPayloadI must be of type OfferPayload");
+            var offerPayload = (OfferPayload) processModel.getOffer().getOfferPayloadI();
+
             Contract contract = new Contract(
-                    processModel.getOffer().getOfferPayload(),
+                    offerPayload,
                     tradeAmount.value,
                     trade.getTradePrice().getValue(),
                     takerFeeTxId,
