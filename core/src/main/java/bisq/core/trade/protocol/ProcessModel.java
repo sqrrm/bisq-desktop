@@ -36,6 +36,7 @@ import bisq.core.support.dispute.refund.refundagent.RefundAgentManager;
 import bisq.core.trade.MakerTrade;
 import bisq.core.trade.Trade;
 import bisq.core.trade.TradeManager;
+import bisq.core.trade.TradeModel;
 import bisq.core.trade.messages.TradeMessage;
 import bisq.core.trade.statistics.ReferralIdService;
 import bisq.core.trade.statistics.TradeStatisticsManager;
@@ -79,7 +80,7 @@ import javax.annotation.Nullable;
 
 @Getter
 @Slf4j
-public class ProcessModel implements Model, PersistablePayload {
+public class ProcessModel implements ProcessModelI, Model, PersistablePayload {
     // Transient/Immutable (net set in constructor so they are not final, but at init)
     transient private ProcessModelServiceProvider provider;
     transient private TradeManager tradeManager;
@@ -281,11 +282,12 @@ public class ProcessModel implements Model, PersistablePayload {
         return takeOfferFeeTx;
     }
 
+    @Override
     public NodeAddress getMyNodeAddress() {
         return getP2PService().getAddress();
     }
 
-    void setPaymentStartedAckMessage(AckMessage ackMessage) {
+    public void setPaymentStartedAckMessage(AckMessage ackMessage) {
         MessageState messageState = ackMessage.isSuccess() ?
                 MessageState.ACKNOWLEDGED :
                 MessageState.FAILED;
@@ -299,7 +301,7 @@ public class ProcessModel implements Model, PersistablePayload {
         }
     }
 
-    void setDepositTxSentAckMessage(AckMessage ackMessage) {
+    public void setDepositTxSentAckMessage(AckMessage ackMessage) {
         MessageState messageState = ackMessage.isSuccess() ?
                 MessageState.ACKNOWLEDGED :
                 MessageState.FAILED;
@@ -313,7 +315,10 @@ public class ProcessModel implements Model, PersistablePayload {
         }
     }
 
-    void witnessDebugLog(Trade trade) {
+    public void witnessDebugLog(TradeModel tradeModel) {
+        if (!(tradeModel instanceof Trade))
+            return;
+        Trade trade = (Trade) tradeModel;
         getAccountAgeWitnessService().getAccountAgeWitnessUtils().witnessDebugLog(trade, null);
     }
 
