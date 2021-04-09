@@ -49,6 +49,8 @@ import bisq.core.support.dispute.messages.OpenNewDisputeMessage;
 import bisq.core.support.dispute.messages.PeerOpenedDisputeMessage;
 import bisq.core.support.dispute.refund.refundagent.RefundAgent;
 import bisq.core.support.messages.ChatMessage;
+import bisq.core.trade.atomic.messages.CreateAtomicTxRequest;
+import bisq.core.trade.atomic.messages.CreateAtomicTxResponse;
 import bisq.core.trade.messages.CounterCurrencyTransferStartedMessage;
 import bisq.core.trade.messages.DelayedPayoutTxSignatureRequest;
 import bisq.core.trade.messages.DelayedPayoutTxSignatureResponse;
@@ -160,6 +162,10 @@ public class CoreNetworkProtoResolver extends CoreProtoResolver implements Netwo
                     return DelayedPayoutTxSignatureResponse.fromProto(proto.getDelayedPayoutTxSignatureResponse(), messageVersion);
                 case DEPOSIT_TX_AND_DELAYED_PAYOUT_TX_MESSAGE:
                     return DepositTxAndDelayedPayoutTxMessage.fromProto(proto.getDepositTxAndDelayedPayoutTxMessage(), messageVersion);
+                case CREATE_ATOMIC_TX_REQUEST:
+                    return CreateAtomicTxRequest.fromProto(proto.getCreateAtomicTxRequest(), messageVersion);
+                case CREATE_ATOMIC_TX_RESPONSE:
+                    return CreateAtomicTxResponse.fromProto(proto.getCreateAtomicTxResponse(), messageVersion);
 
                 case COUNTER_CURRENCY_TRANSFER_STARTED_MESSAGE:
                     return CounterCurrencyTransferStartedMessage.fromProto(proto.getCounterCurrencyTransferStartedMessage(), messageVersion);
