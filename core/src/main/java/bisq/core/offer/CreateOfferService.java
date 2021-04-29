@@ -258,7 +258,8 @@ public class CreateOfferService {
                 amount.getValue(),
                 minAmount.getValue(),
                 Version.VERSION,
-                Version.TRADE_PROTOCOL_VERSION);
+                Version.TRADE_PROTOCOL_VERSION,
+                offerUtil.isCurrencyForMakerFeeBtc(amount));
         return new Offer(atomicOfferPayload);
     }
 
