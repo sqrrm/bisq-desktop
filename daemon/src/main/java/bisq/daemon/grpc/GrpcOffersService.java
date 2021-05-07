@@ -18,14 +18,21 @@
 package bisq.daemon.grpc;
 
 import bisq.core.api.CoreApi;
+import bisq.core.api.model.AtomicOfferInfo;
 import bisq.core.api.model.OfferInfo;
 import bisq.core.offer.Offer;
 import bisq.core.offer.OpenOffer;
 
 import bisq.proto.grpc.CancelOfferReply;
 import bisq.proto.grpc.CancelOfferRequest;
+import bisq.proto.grpc.CreateAtomicOfferReply;
+import bisq.proto.grpc.CreateAtomicOfferRequest;
 import bisq.proto.grpc.CreateOfferReply;
 import bisq.proto.grpc.CreateOfferRequest;
+import bisq.proto.grpc.GetAtomicOfferReply;
+import bisq.proto.grpc.GetAtomicOffersReply;
+import bisq.proto.grpc.GetMyAtomicOfferReply;
+import bisq.proto.grpc.GetMyAtomicOffersReply;
 import bisq.proto.grpc.GetMyOfferReply;
 import bisq.proto.grpc.GetMyOfferRequest;
 import bisq.proto.grpc.GetMyOffersReply;
@@ -47,6 +54,7 @@ import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static bisq.core.api.model.AtomicOfferInfo.toAtomicOfferInfo;
 import static bisq.core.api.model.OfferInfo.toOfferInfo;
 import static bisq.daemon.grpc.interceptor.GrpcServiceRateMeteringConfig.getCustomRateMeteringInterceptor;
 import static bisq.proto.grpc.OffersGrpc.*;
@@ -71,12 +79,43 @@ class GrpcOffersService extends OffersImplBase {
     }
 
     @Override
+    public void getAtomicOffer(GetOfferRequest req,
+                               StreamObserver<GetAtomicOfferReply> responseObserver) {
+        try {
+            Offer offer = coreApi.getOffer(req.getId());
+            var reply = GetAtomicOfferReply.newBuilder()
+                    .setAtomicOffer(toAtomicOfferInfo(offer).toProtoMessage())
+                    .build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        } catch (Throwable cause) {
+            exceptionHandler.handleException(log, cause, responseObserver);
+        }
+    }
+
+    @Override
     public void getOffer(GetOfferRequest req,
                          StreamObserver<GetOfferReply> responseObserver) {
         try {
             Offer offer = coreApi.getOffer(req.getId());
             var reply = GetOfferReply.newBuilder()
                     .setOffer(toOfferInfo(offer).toProtoMessage())
+                    .build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        } catch (Throwable cause) {
+            exceptionHandler.handleException(log, cause, responseObserver);
+        }
+    }
+
+    @Override
+    public void getMyAtomicOffer(GetMyOfferRequest req,
+                                 StreamObserver<GetMyAtomicOfferReply> responseObserver) {
+        try {
+            Offer offer = coreApi.getMyAtomicOffer(req.getId());
+            OpenOffer openOffer = coreApi.getMyOpenAtomicOffer(req.getId());
+            var reply = GetMyAtomicOfferReply.newBuilder()
+                    .setAtomicOffer(toAtomicOfferInfo(offer /* TODO support triggerPrice */).toProtoMessage())
                     .build();
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
@@ -102,6 +141,25 @@ class GrpcOffersService extends OffersImplBase {
     }
 
     @Override
+    public void getAtomicOffers(GetOffersRequest req,
+                                StreamObserver<GetAtomicOffersReply> responseObserver) {
+        try {
+            List<AtomicOfferInfo> result = coreApi.getAtomicOffers(req.getDirection(), req.getCurrencyCode())
+                    .stream().map(AtomicOfferInfo::toAtomicOfferInfo)
+                    .collect(Collectors.toList());
+            var reply = GetAtomicOffersReply.newBuilder()
+                    .addAllAtomicOffers(result.stream()
+                            .map(AtomicOfferInfo::toProtoMessage)
+                            .collect(Collectors.toList()))
+                    .build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        } catch (Throwable cause) {
+            exceptionHandler.handleException(log, cause, responseObserver);
+        }
+    }
+
+    @Override
     public void getOffers(GetOffersRequest req,
                           StreamObserver<GetOffersReply> responseObserver) {
         try {
@@ -111,6 +169,25 @@ class GrpcOffersService extends OffersImplBase {
             var reply = GetOffersReply.newBuilder()
                     .addAllOffers(result.stream()
                             .map(OfferInfo::toProtoMessage)
+                            .collect(Collectors.toList()))
+                    .build();
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        } catch (Throwable cause) {
+            exceptionHandler.handleException(log, cause, responseObserver);
+        }
+    }
+
+    @Override
+    public void getMyAtomicOffers(GetMyOffersRequest req,
+                                  StreamObserver<GetMyAtomicOffersReply> responseObserver) {
+        try {
+            List<AtomicOfferInfo> result = coreApi.getMyAtomicOffers(req.getDirection(), req.getCurrencyCode())
+                    .stream().map(AtomicOfferInfo::toAtomicOfferInfo)
+                    .collect(Collectors.toList());
+            var reply = GetMyAtomicOffersReply.newBuilder()
+                    .addAllAtomicOffers(result.stream()
+                            .map(AtomicOfferInfo::toProtoMessage)
                             .collect(Collectors.toList()))
                     .build();
             responseObserver.onNext(reply);
@@ -140,10 +217,33 @@ class GrpcOffersService extends OffersImplBase {
     }
 
     @Override
+    public void createAtomicOffer(CreateAtomicOfferRequest req,
+                                  StreamObserver<CreateAtomicOfferReply> responseObserver) {
+        try {
+            coreApi.createAndPlaceAtomicOffer(
+                    req.getDirection(),
+                    req.getAmount(),
+                    req.getMinAmount(),
+                    req.getPrice(),
+                    req.getPaymentAccountId(),
+                    atomicOffer -> {
+                        AtomicOfferInfo atomicOfferInfo = toAtomicOfferInfo(atomicOffer);
+                        CreateAtomicOfferReply reply = CreateAtomicOfferReply.newBuilder()
+                                .setAtomicOffer(atomicOfferInfo.toProtoMessage())
+                                .build();
+                        responseObserver.onNext(reply);
+                        responseObserver.onCompleted();
+                    });
+        } catch (Throwable cause) {
+            exceptionHandler.handleException(log, cause, responseObserver);
+        }
+    }
+
+    @Override
     public void createOffer(CreateOfferRequest req,
                             StreamObserver<CreateOfferReply> responseObserver) {
         try {
-            coreApi.createAnPlaceOffer(
+            coreApi.createAndPlaceOffer(
                     req.getCurrencyCode(),
                     req.getDirection(),
                     req.getPrice(),
@@ -169,6 +269,7 @@ class GrpcOffersService extends OffersImplBase {
             exceptionHandler.handleException(log, cause, responseObserver);
         }
     }
+
 
     @Override
     public void cancelOffer(CancelOfferRequest req,
