@@ -546,10 +546,12 @@ public class CliMain {
                     var currencyCode = opts.getCurrencyCode();
                     var address = opts.getAddress();
                     var isTradeInstant = opts.getIsTradeInstant();
+                    var isTradeAtomic = opts.getIsTradeAtomic();
                     var paymentAccount = client.createCryptoCurrencyPaymentAccount(accountName,
                             currencyCode,
                             address,
-                            isTradeInstant);
+                            isTradeInstant,
+                            isTradeAtomic);
                     out.println("payment account saved");
                     out.println(formatPaymentAcctTbl(singletonList(paymentAccount)));
                     return;

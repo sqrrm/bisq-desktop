@@ -17,6 +17,8 @@
 
 package bisq.apitest;
 
+import java.time.Duration;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -34,6 +36,7 @@ import static bisq.apitest.config.BisqAppConfig.arbdaemon;
 import static bisq.apitest.config.BisqAppConfig.bobdaemon;
 import static bisq.proto.grpc.DisputeAgentsGrpc.getRegisterDisputeAgentMethod;
 import static bisq.proto.grpc.GetVersionGrpc.getGetVersionMethod;
+import static com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly;
 import static java.net.InetAddress.getLoopbackAddress;
 import static java.util.Arrays.stream;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -136,11 +139,7 @@ public class ApiTestCase {
     }
 
     protected static void sleep(long ms) {
-        try {
-            MILLISECONDS.sleep(ms);
-        } catch (InterruptedException ignored) {
-            // empty
-        }
+        sleepUninterruptibly(Duration.ofMillis(ms));
     }
 
     protected final String testName(TestInfo testInfo) {

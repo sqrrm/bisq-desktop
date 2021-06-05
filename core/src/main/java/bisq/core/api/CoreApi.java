@@ -28,6 +28,8 @@ import bisq.core.offer.OpenOffer;
 import bisq.core.payment.PaymentAccount;
 import bisq.core.payment.payload.PaymentMethod;
 import bisq.core.trade.Trade;
+import bisq.core.trade.atomic.AtomicTrade;
+import bisq.core.trade.handlers.TradeResultHandler;
 import bisq.core.trade.statistics.TradeStatistics3;
 import bisq.core.trade.statistics.TradeStatisticsManager;
 
@@ -35,6 +37,8 @@ import bisq.common.app.Version;
 import bisq.common.config.Config;
 import bisq.common.handlers.ErrorMessageHandler;
 import bisq.common.handlers.ResultHandler;
+
+import bisq.proto.grpc.AtomicOfferInfo;
 
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.Transaction;
@@ -118,38 +122,72 @@ public class CoreApi {
     // Offers
     ///////////////////////////////////////////////////////////////////////////////////////////
 
+    public Offer getAtomicOffer(String id) {
+        return coreOffersService.getAtomicOffer(id);
+    }
+
     public Offer getOffer(String id) {
         return coreOffersService.getOffer(id);
+    }
+
+    public Offer getMyAtomicOffer(String id) {
+        return coreOffersService.getMyAtomicOffer(id);
     }
 
     public Offer getMyOffer(String id) {
         return coreOffersService.getMyOffer(id);
     }
 
+    public List<Offer> getAtomicOffers(String direction, String currencyCode) {
+        return coreOffersService.getAtomicOffers(direction, currencyCode);
+    }
+
     public List<Offer> getOffers(String direction, String currencyCode) {
         return coreOffersService.getOffers(direction, currencyCode);
+    }
+
+    public List<Offer> getMyAtomicOffers(String direction, String currencyCode) {
+        return coreOffersService.getMyAtomicOffers(direction, currencyCode);
     }
 
     public List<Offer> getMyOffers(String direction, String currencyCode) {
         return coreOffersService.getMyOffers(direction, currencyCode);
     }
 
+    public OpenOffer getMyOpenAtomicOffer(String id) {
+        return coreOffersService.getMyOpenAtomicOffer(id);
+    }
+
     public OpenOffer getMyOpenOffer(String id) {
         return coreOffersService.getMyOpenOffer(id);
     }
 
-    public void createAnPlaceOffer(String currencyCode,
-                                   String directionAsString,
-                                   String priceAsString,
-                                   boolean useMarketBasedPrice,
-                                   double marketPriceMargin,
-                                   long amountAsLong,
-                                   long minAmountAsLong,
-                                   double buyerSecurityDeposit,
-                                   long triggerPrice,
-                                   String paymentAccountId,
-                                   String makerFeeCurrencyCode,
-                                   Consumer<Offer> resultHandler) {
+    public void createAndPlaceAtomicOffer(String directionAsString,
+                                          long amountAsLong,
+                                          long minAmountAsLong,
+                                          String priceAsString,
+                                          String paymentAccountId,
+                                          Consumer<Offer> resultHandler) {
+        coreOffersService.createAndPlaceAtomicOffer(directionAsString,
+                amountAsLong,
+                minAmountAsLong,
+                priceAsString,
+                paymentAccountId,
+                resultHandler);
+    }
+
+    public void createAndPlaceOffer(String currencyCode,
+                                    String directionAsString,
+                                    String priceAsString,
+                                    boolean useMarketBasedPrice,
+                                    double marketPriceMargin,
+                                    long amountAsLong,
+                                    long minAmountAsLong,
+                                    double buyerSecurityDeposit,
+                                    long triggerPrice,
+                                    String paymentAccountId,
+                                    String makerFeeCurrencyCode,
+                                    Consumer<Offer> resultHandler) {
         coreOffersService.createAndPlaceOffer(currencyCode,
                 directionAsString,
                 priceAsString,
@@ -213,11 +251,13 @@ public class CoreApi {
     public PaymentAccount createCryptoCurrencyPaymentAccount(String accountName,
                                                              String currencyCode,
                                                              String address,
-                                                             boolean tradeInstant) {
+                                                             boolean tradeInstant,
+                                                             boolean tradeAtomic) {
         return paymentAccountsService.createCryptoCurrencyPaymentAccount(accountName,
                 currencyCode,
                 address,
-                tradeInstant);
+                tradeInstant,
+                tradeAtomic);
     }
 
     public List<PaymentMethod> getCryptoCurrencyPaymentMethods() {
@@ -235,6 +275,19 @@ public class CoreApi {
     ///////////////////////////////////////////////////////////////////////////////////////////
     // Trades
     ///////////////////////////////////////////////////////////////////////////////////////////
+
+    public void takeAtomicOffer(String offerId,
+                                String paymentAccountId,
+                                String takerFeeCurrencyCode,
+                                TradeResultHandler<AtomicTrade> tradeResultHandler,
+                                ErrorMessageHandler errorMessageHandler) {
+        Offer atomicOffer = coreOffersService.getAtomicOffer(offerId);
+        coreTradesService.takeAtomicOffer(atomicOffer,
+                paymentAccountId,
+                takerFeeCurrencyCode,
+                tradeResultHandler,
+                errorMessageHandler);
+    }
 
     public void takeOffer(String offerId,
                           String paymentAccountId,
@@ -263,6 +316,10 @@ public class CoreApi {
 
     public void withdrawFunds(String tradeId, String address, String memo) {
         coreTradesService.withdrawFunds(tradeId, address, memo);
+    }
+
+    public AtomicTrade getAtomicTrade(String tradeId) {
+        return coreTradesService.getAtomicTrade(tradeId);
     }
 
     public Trade getTrade(String tradeId) {

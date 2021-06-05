@@ -18,12 +18,15 @@
 package bisq.cli;
 
 import bisq.proto.grpc.AddressBalanceInfo;
+import bisq.proto.grpc.AtomicOfferInfo;
+import bisq.proto.grpc.AtomicTradeInfo;
 import bisq.proto.grpc.BalancesInfo;
 import bisq.proto.grpc.BsqBalanceInfo;
 import bisq.proto.grpc.BtcBalanceInfo;
 import bisq.proto.grpc.CancelOfferRequest;
 import bisq.proto.grpc.ConfirmPaymentReceivedRequest;
 import bisq.proto.grpc.ConfirmPaymentStartedRequest;
+import bisq.proto.grpc.CreateAtomicOfferRequest;
 import bisq.proto.grpc.CreateCryptoCurrencyPaymentAccountRequest;
 import bisq.proto.grpc.CreateOfferRequest;
 import bisq.proto.grpc.CreatePaymentAccountRequest;
@@ -55,6 +58,8 @@ import bisq.proto.grpc.SendBtcRequest;
 import bisq.proto.grpc.SetTxFeeRatePreferenceRequest;
 import bisq.proto.grpc.SetWalletPasswordRequest;
 import bisq.proto.grpc.StopRequest;
+import bisq.proto.grpc.TakeAtomicOfferReply;
+import bisq.proto.grpc.TakeAtomicOfferRequest;
 import bisq.proto.grpc.TakeOfferReply;
 import bisq.proto.grpc.TakeOfferRequest;
 import bisq.proto.grpc.TradeInfo;
@@ -200,6 +205,21 @@ public final class GrpcClient {
         return grpcStubs.walletsService.getTransaction(request).getTxInfo();
     }
 
+    public AtomicOfferInfo createAtomicOffer(String direction,
+                                             long amount,
+                                             long minAmount,
+                                             String fixedPrice,
+                                             String paymentAcctId) {
+        var request = CreateAtomicOfferRequest.newBuilder()
+                .setDirection(direction)
+                .setAmount(amount)
+                .setMinAmount(minAmount)
+                .setPrice(fixedPrice)
+                .setPaymentAccountId(paymentAcctId)
+                .build();
+        return grpcStubs.offersService.createAtomicOffer(request).getAtomicOffer();
+    }
+
     public OfferInfo createFixedPricedOffer(String direction,
                                             String currencyCode,
                                             long amount,
@@ -272,6 +292,13 @@ public final class GrpcClient {
         grpcStubs.offersService.cancelOffer(request);
     }
 
+    public AtomicOfferInfo getAtomicOffer(String offerId) {
+        var request = GetOfferRequest.newBuilder()
+                .setId(offerId)
+                .build();
+        return grpcStubs.offersService.getAtomicOffer(request).getAtomicOffer();
+    }
+
     public OfferInfo getOffer(String offerId) {
         var request = GetOfferRequest.newBuilder()
                 .setId(offerId)
@@ -279,11 +306,26 @@ public final class GrpcClient {
         return grpcStubs.offersService.getOffer(request).getOffer();
     }
 
+    public AtomicOfferInfo getMyAtomicOffer(String offerId) {
+        var request = GetMyOfferRequest.newBuilder()
+                .setId(offerId)
+                .build();
+        return grpcStubs.offersService.getMyAtomicOffer(request).getAtomicOffer();
+    }
+
     public OfferInfo getMyOffer(String offerId) {
         var request = GetMyOfferRequest.newBuilder()
                 .setId(offerId)
                 .build();
         return grpcStubs.offersService.getMyOffer(request).getOffer();
+    }
+
+    public List<AtomicOfferInfo> getAtomicOffers(String direction, String currencyCode) {
+        var request = GetOffersRequest.newBuilder()
+                .setDirection(direction)
+                .setCurrencyCode(currencyCode)
+                .build();
+        return grpcStubs.offersService.getAtomicOffers(request).getAtomicOffersList();
     }
 
     public List<OfferInfo> getOffers(String direction, String currencyCode) {
@@ -323,6 +365,21 @@ public final class GrpcClient {
         return sortOffersByDate(offers);
     }
 
+    public List<AtomicOfferInfo> getAtomicOffersSortedByDate() {
+        ArrayList<AtomicOfferInfo> offers = new ArrayList<>();
+        offers.addAll(getAtomicOffers(BUY.name(), "BSQ"));
+        offers.addAll(getAtomicOffers(SELL.name(), "BSQ"));
+        return sortAtomicOffersByDate(offers);
+    }
+
+    public List<AtomicOfferInfo> getMyAtomicOffers(String direction, String currencyCode) {
+        var request = GetMyOffersRequest.newBuilder()
+                .setDirection(direction)
+                .setCurrencyCode(currencyCode)
+                .build();
+        return grpcStubs.offersService.getMyAtomicOffers(request).getAtomicOffersList();
+    }
+
     public List<OfferInfo> getMyOffers(String direction, String currencyCode) {
         if (isSupportedCryptoCurrency(currencyCode)) {
             return getMyCryptoCurrencyOffers(direction, currencyCode);
@@ -360,15 +417,39 @@ public final class GrpcClient {
         return sortOffersByDate(offers);
     }
 
+    public List<AtomicOfferInfo> getMyAtomicBsqOffersSortedByDate() {
+        ArrayList<AtomicOfferInfo> offers = new ArrayList<>();
+        offers.addAll(getMyAtomicOffers(BUY.name(), "BSQ"));
+        offers.addAll(getMyAtomicOffers(SELL.name(), "BSQ"));
+        return sortAtomicOffersByDate(offers);
+    }
+
     public OfferInfo getMostRecentOffer(String direction, String currencyCode) {
         List<OfferInfo> offers = getOffersSortedByDate(direction, currencyCode);
         return offers.isEmpty() ? null : offers.get(offers.size() - 1);
+    }
+
+    public List<AtomicOfferInfo> sortAtomicOffersByDate(List<AtomicOfferInfo> offerInfoList) {
+        return offerInfoList.stream()
+                .sorted(comparing(AtomicOfferInfo::getDate))
+                .collect(toList());
     }
 
     public List<OfferInfo> sortOffersByDate(List<OfferInfo> offerInfoList) {
         return offerInfoList.stream()
                 .sorted(comparing(OfferInfo::getDate))
                 .collect(toList());
+    }
+
+    public TakeAtomicOfferReply getTakeAtomicOfferReply(String offerId,
+                                                        String paymentAccountId,
+                                                        String takerFeeCurrencyCode) {
+        var request = TakeAtomicOfferRequest.newBuilder()
+                .setOfferId(offerId)
+                .setPaymentAccountId(paymentAccountId)
+                .setTakerFeeCurrencyCode(takerFeeCurrencyCode)
+                .build();
+        return grpcStubs.tradesService.takeAtomicOffer(request);
     }
 
     public TakeOfferReply getTakeOfferReply(String offerId, String paymentAccountId, String takerFeeCurrencyCode) {
@@ -380,12 +461,27 @@ public final class GrpcClient {
         return grpcStubs.tradesService.takeOffer(request);
     }
 
+    public AtomicTradeInfo takeAtomicOffer(String offerId, String paymentAccountId, String takerFeeCurrencyCode) {
+        var reply = getTakeAtomicOfferReply(offerId, paymentAccountId, takerFeeCurrencyCode);
+        if (reply.hasAtomicTrade())
+            return reply.getAtomicTrade();
+        else
+            throw new IllegalStateException(reply.getFailureReason().getDescription());
+    }
+
     public TradeInfo takeOffer(String offerId, String paymentAccountId, String takerFeeCurrencyCode) {
         var reply = getTakeOfferReply(offerId, paymentAccountId, takerFeeCurrencyCode);
         if (reply.hasTrade())
             return reply.getTrade();
         else
             throw new IllegalStateException(reply.getFailureReason().getDescription());
+    }
+
+    public AtomicTradeInfo getAtomicTrade(String tradeId) {
+        var request = GetTradeRequest.newBuilder()
+                .setTradeId(tradeId)
+                .build();
+        return grpcStubs.tradesService.getAtomicTrade(request).getAtomicTrade();
     }
 
     public TradeInfo getTrade(String tradeId) {
@@ -452,12 +548,15 @@ public final class GrpcClient {
     public PaymentAccount createCryptoCurrencyPaymentAccount(String accountName,
                                                              String currencyCode,
                                                              String address,
-                                                             boolean tradeInstant) {
+                                                             boolean tradeInstant,
+                                                             boolean tradeAtomic) {
+        // TODO Split into 2 methods:  createAtomicPaymentAccount(), createCryptoCurrencyPaymentAccount().
         var request = CreateCryptoCurrencyPaymentAccountRequest.newBuilder()
                 .setAccountName(accountName)
                 .setCurrencyCode(currencyCode)
                 .setAddress(address)
                 .setTradeInstant(tradeInstant)
+                .setTradeAtomic(tradeAtomic)
                 .build();
         return grpcStubs.paymentAccountsService.createCryptoCurrencyPaymentAccount(request).getPaymentAccount();
     }
